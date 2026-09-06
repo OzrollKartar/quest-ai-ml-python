@@ -1,61 +1,53 @@
-import os
-from fastapi import FastAPI
-from mcp.server.fastmcp import FastMCP
-from mcp.server.sse import SseServerTransport
-from starlette.applications import Starlette
-from starlette.routing import Mount, Route
-import httpx
+"""
+Deployable MCP server (HTTP transport).
+=======================================
+The stdio server (simple_server.py) is launched as a subprocess by the host on
+YOUR machine. To *deploy* a server -- run it once and let many clients connect
+over the network by URL -- you switch the transport to "streamable-http".
 
-# Initialize FastMCP server
-mcp = FastMCP("GitHub Manager")
+Same tools, same @mcp.tool() decorators. The ONLY difference is how it's served.
+
+Run it (locally or on a VM/container):
+    py http_server.py
+    # -> serves MCP at  http://0.0.0.0:8000/mcp
+
+Then a client connects to that URL instead of spawning a process.
+See http_client.py for a standalone client, and README.md section
+"Deploying over HTTP" for Claude Code / Docker / cloud steps.
+"""
+
+import os
+
+from mcp.server.fastmcp import FastMCP
+
+# host/port come from env so the same file works locally and in a container.
+HOST = os.environ.get("MCP_HOST", "0.0.0.0")
+PORT = int(os.environ.get("MCP_PORT", "8000"))
+
+# stateless_http=True => no per-client session state kept on the server, which
+# is what you want behind a load balancer / for a simple deployment.
+mcp = FastMCP("deployable-demo", host=HOST, port=PORT, stateless_http=True)
+
 
 @mcp.tool()
-async def search_github_repos(query: str, github_pat: str = "") -> str:
-    """Search public or private GitHub repositories.
-    
-    Args:
-        query: Search query string (e.g., 'fastapi language:python')
-        github_pat: Optional GitHub Personal Access Token. Falls back to environment variable if empty.
-    """
-    token = github_pat or os.getenv("GITHUB_PAT", "")
-    headers = {"Accept": "vnd.github+json"}
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-        
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            "https://api.github.com/search/repositories",
-            params={"q": query},
-            headers=headers
-        )
-        if response.status_code != 200:
-            return f"Error: {response.status_code} - {response.text}"
-            
-        data = response.json()
-        repos = [f"- [{repo['full_name']}]({repo['html_url']}): {repo['description']}" for repo in data.get("items", [])[:5]]
-        return "\n".join(repos) if repos else "No repositories found."
+def add(a: float, b: float) -> float:
+    """Add two numbers and return the sum."""
+    return a + b
 
-# Bridge MCP SSE transport with Starlette
-def create_sse_app(mcp_server: FastMCP) -> Starlette:
-    transport = SseServerTransport("/messages/")
 
-    async def handle_sse(request):
-        async with transport.connect_sse(request.scope, request.receive, request._send) as streams:
-            await mcp_server._mcp_server.run(
-                streams[0], streams[1], mcp_server._mcp_server.create_initialization_options()
-            )
+@mcp.tool()
+def createTask(assignee: str, taskName: str) -> str:
+    """Create a task for the given assignee and return a confirmation."""
+    return f"Task '{taskName}' created and assigned to {assignee}."
 
-    return Starlette(
-        routes=[
-            Route("/sse", endpoint=handle_sse),
-            Mount("/messages/", app=transport.handle_post_message),
-        ]
-    )
 
-# Main FastAPI application for Render
-app = FastAPI()
-app.mount("/", create_sse_app(mcp))
+@mcp.tool()
+def word_count(text: str) -> int:
+    """Count the words in a piece of text."""
+    return len(text.split())
+
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+    print(f"Serving MCP over HTTP at http://{HOST}:{PORT}/mcp  (Ctrl+C to stop)")
+    # The transport is the whole point: HTTP instead of stdio.
+    mcp.run(transport="streamable-http")
