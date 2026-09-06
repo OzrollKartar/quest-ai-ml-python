@@ -1,0 +1,28 @@
+INFO:     Started server process [18396]
+INFO:     Waiting for application startup.
+[09/06/26 10:21:06] INFO     StreamableHTTP      streamable_http_manager.py:128
+                             session manager                                   
+                             started                                           
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+Serving MCP over HTTP at http://0.0.0.0:8000/mcp  (Ctrl+C to stop)
+INFO:     127.0.0.1:54666 - "POST /mcp HTTP/1.1" 200 OK
+[09/06/26 10:21:22] INFO     Terminating session: None   streamable_http.py:785
+INFO:     127.0.0.1:54668 - "POST /mcp HTTP/1.1" 202 Accepted
+[09/06/26 10:21:23] INFO     Terminating session: None   streamable_http.py:785
+INFO:     127.0.0.1:54670 - "POST /mcp HTTP/1.1" 200 OK
+                    INFO     Processing request of type           server.py:727
+                             ListToolsRequest                                  
+                    INFO     Terminating session: None   streamable_http.py:785
+INFO:     127.0.0.1:54672 - "POST /mcp HTTP/1.1" 200 OK
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Terminating session: None   streamable_http.py:785
+INFO:     127.0.0.1:54674 - "POST /mcp HTTP/1.1" 200 OK
+[09/06/26 10:21:24] INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Terminating session: None   streamable_http.py:785
+INFO:     127.0.0.1:54676 - "POST /mcp HTTP/1.1" 200 OK
+                    INFO     Processing request of type           server.py:727
+                             CallToolRequest                                   
+                    INFO     Terminating session: None   streamable_http.py:785

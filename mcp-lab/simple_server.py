@@ -29,6 +29,13 @@ def add(a: float, b: float) -> float:
     return a + b
 
 
+@mcp.tool()
+def createTask(assignee: str, taskName: str) -> str:
+    """Create a task for the given assignee and return a confirmation."""
+    # (A real server would persist this; here we just acknowledge it.)
+    return f"Task '{taskName}' created and assigned to {assignee}."
+
+
 # ---- Another tool: strings work the same way ----
 @mcp.tool()
 def greet(name: str, excited: bool = False) -> str:
